@@ -50,7 +50,25 @@ static inline fat_volume get_fat_volume() {
 //     strcat(buf, operation_type);
 //     strcat(buf, "\n");
 // }
+/* 
+static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 
+static void fat_fuse_log_create(void) {
+    fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
+}
+
+static void fat_fuse_log_write(char *text) {
+    fat_volume vol = get_fat_volume();
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    if (log_node == NULL) {
+        fat_fuse_log_create();
+        log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    }
+    fat_file log_file = fat_tree_get_file(log_node);
+    fat_file parent = fat_tree_get_parent(log_node);
+    fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size, parent);
+}
+ */
 /* Get file attributes (file descriptor version) */
 static int fat_fuse_fgetattr(const char *path, struct stat *stbuf,
                              struct fuse_file_info *fi) {
