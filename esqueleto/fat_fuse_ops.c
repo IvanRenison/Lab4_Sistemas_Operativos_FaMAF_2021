@@ -29,35 +29,25 @@ static inline fat_volume get_fat_volume() {
 #define LOG_MESSAGE_SIZE 100
 #define DATE_MESSAGE_SIZE 30
 
-// static void now_to_str(char *buf) {
-//     time_t now = time(NULL);
-//     struct tm *timeinfo;
-//     timeinfo = localtime(&now);
-
-//     strftime(buf, DATE_MESSAGE_SIZE, "%d-%m-%Y %H:%M", timeinfo);
-// }
-
-// // TODO: complete this function to log to file
-// static void fat_fuse_log_activity(char *operation_type, fat_file target_file)
-// {
-//     char buf[LOG_MESSAGE_SIZE] = "";
-//     now_to_str(buf);
-//     strcat(buf, "\t");
-//     strcat(buf, getlogin());
-//     strcat(buf, "\t");
-//     strcat(buf, target_file->filepath);
-//     strcat(buf, "\t");
-//     strcat(buf, operation_type);
-//     strcat(buf, "\n");
-// }
-/* 
 static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 
+/* Create log file.
+ *
+ * Must not be executed if log already exists.
+ */
 static void fat_fuse_log_create(void) {
     fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
 }
 
+/* Writes @text to the log file.
+ *
+ * If the log file doesn't exists, it's created.
+ *
+ * PRE: text != NULL
+ */
 static void fat_fuse_log_write(char *text) {
+    assert(text != NULL);
+
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
     if (log_node == NULL) {
@@ -66,9 +56,93 @@ static void fat_fuse_log_write(char *text) {
     }
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
-    fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size, parent);
+    ssize_t size = fat_file_pwrite(log_file, text, strlen(text),
+                                   log_file->dentry->file_size, parent);
 }
+
+static void now_to_str(char *buf) {
+    time_t now = time(NULL);
+    struct tm *timeinfo;
+    timeinfo = localtime(&now);
+
+    buf = realloc(buf, strlen(buf) + DATE_MESSAGE_SIZE);
+
+    strftime(buf, DATE_MESSAGE_SIZE, "%d-%m-%Y %H:%M", timeinfo);
+}
+
+/* Concatenates 2 strings re-allocating the first one to add the necessary
+ * space. s1 has to be a dinamic string (declared with malloc), but s2 can
+ * be static.
+ *
+ * s2 must not be NULL, but s1 can be NULL, in that case nothing is done
+ * and NULL is returned. This allows us to use str_concat several times and
+ * only check if there's an error at the end of everything, saving us a lot
+ * of `if`.
+ *
+ * In case of memory allocation error NULL is returned and s1 is freed
+ * (but not s2).
+ *
+ * USAGE:
+ *     s1 = str_concat(s1, s2);
+ *     s1 = str_concat(s1, "string");
+ *
+ * REQUIRES:
+ *     s2 != NULL
  */
+static char *str_concat(char *s1, const char *s2) {
+    assert(s2 != NULL);
+
+    if (s1 != NULL) {
+        size_t s1_len = strlen(s1);
+        size_t s2_len = strlen(s2);
+        s1 = reallocarray(s1, s1_len + s2_len + 1, sizeof(char));
+        // The + 1 is for the '\0'
+        if (s1 != NULL) {
+            // Case that reallocarray doesn't fail
+            s1 = strcat(s1, s2);
+        } else {
+            // Case that reallocarray fails
+            free(s1);
+            s1 = NULL;
+        }
+    }
+    return (s1);
+}
+
+/* Creates the string with the message that will be logged into fs.log
+ * The returned pointer is owned by the caller, and must be freed.
+ *
+ * In case of memory allocation error NULL is returned.
+ */
+static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
+    char *text = malloc(sizeof(char));
+    *text = '\0';
+    now_to_str(text);
+    str_concat(text, "\t");
+    str_concat(text, getlogin());
+    str_concat(text, "\t");
+    str_concat(text, target_file->filepath);
+    str_concat(text, "\t");
+    str_concat(text, log_text);
+    str_concat(text, "\n");
+
+    return (text);
+}
+
+/* Makes a call to fat_fuse_log_creat_string to receive
+ * the message to be logged into fs.log and logs it using
+ * fat_fuse_log_write.
+ */
+static void fat_fuse_log_activity(char *log_text, fat_file target_file) {
+    char *text = fat_fuse_log_creat_string(log_text, target_file);
+    if (text != NULL) {
+        // In this case no message is logged
+        return;
+    }
+    fat_fuse_log_write(text);
+    free(text);
+}
+
 /* Get file attributes (file descriptor version) */
 static int fat_fuse_fgetattr(const char *path, struct stat *stbuf,
                              struct fuse_file_info *fi) {
@@ -192,6 +266,8 @@ static int fat_fuse_read(const char *path, char *buf, size_t size, off_t offset,
         return -errno;
     }
 
+    fat_fuse_log_activity("read", file);
+
     return bytes_read;
 }
 
@@ -206,6 +282,9 @@ static int fat_fuse_write(const char *path, const char *buf, size_t size,
         return 0; // Nothing to write
     if (offset > file->dentry->file_size)
         return -EOVERFLOW;
+
+    fat_fuse_log_activity("write", file);
+
     return fat_file_pwrite(file, buf, size, offset, parent);
 }
 
