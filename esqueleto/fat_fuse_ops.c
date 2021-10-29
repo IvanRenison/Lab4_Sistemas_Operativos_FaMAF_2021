@@ -125,13 +125,13 @@ static char *str_concat(char *s1, const char *s2) {
  */
 static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
     char *text = now_to_str();
-    str_concat(text, "\t");
-    str_concat(text, getlogin());
-    str_concat(text, "\t");
-    str_concat(text, target_file->filepath);
-    str_concat(text, "\t");
-    str_concat(text, log_text);
-    str_concat(text, "\n");
+    text = str_concat(text, "\t");
+    text = str_concat(text, getlogin());
+    text = str_concat(text, "\t");
+    text = str_concat(text, target_file->filepath);
+    text = str_concat(text, "\t");
+    text = str_concat(text, log_text);
+    text = str_concat(text, "\n");
 
     return (text);
 }
