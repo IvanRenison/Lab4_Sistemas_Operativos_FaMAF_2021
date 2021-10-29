@@ -12,6 +12,7 @@
 #include "fat_util.h"
 #include "fat_volume.h"
 #include <alloca.h>
+#include <assert.h>
 #include <errno.h>
 #include <gmodule.h>
 #include <libgen.h>
@@ -56,18 +57,26 @@ static void fat_fuse_log_write(char *text) {
     }
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
-    ssize_t size = fat_file_pwrite(log_file, text, strlen(text),
-                                   log_file->dentry->file_size, parent);
+    fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size,
+                    parent);
 }
 
-static void now_to_str(char *buf) {
+/* Creates a string with the current date and time.
+ * The string is allocates, and must be freed by the caller.
+ * In case of memory allocation error NULL is returned
+ */
+static char *now_to_str(void) {
+    char *text = malloc(DATE_MESSAGE_SIZE);
+    if (text == NULL) {
+        return text;
+    }
+
     time_t now = time(NULL);
     struct tm *timeinfo;
     timeinfo = localtime(&now);
 
-    buf = realloc(buf, strlen(buf) + DATE_MESSAGE_SIZE);
-
-    strftime(buf, DATE_MESSAGE_SIZE, "%d-%m-%Y %H:%M", timeinfo);
+    strftime(text, DATE_MESSAGE_SIZE, "%d-%m-%Y %H:%M", timeinfo);
+    return (text);
 }
 
 /* Concatenates 2 strings re-allocating the first one to add the necessary
@@ -115,9 +124,7 @@ static char *str_concat(char *s1, const char *s2) {
  * In case of memory allocation error NULL is returned.
  */
 static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
-    char *text = malloc(sizeof(char));
-    *text = '\0';
-    now_to_str(text);
+    char *text = now_to_str();
     str_concat(text, "\t");
     str_concat(text, getlogin());
     str_concat(text, "\t");
@@ -135,7 +142,7 @@ static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
  */
 static void fat_fuse_log_activity(char *log_text, fat_file target_file) {
     char *text = fat_fuse_log_creat_string(log_text, target_file);
-    if (text != NULL) {
+    if (text == NULL) {
         // In this case no message is logged
         return;
     }
