@@ -38,10 +38,10 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
  */
 static void fat_fuse_log_create(void) {
     fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
-    fat_volume vol = get_fat_volume();
+/*     fat_volume vol = get_fat_volume();
     fat_file log_file = fat_tree_search(vol->file_tree, "/fs.log");
     log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-    log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM; 
+    log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;  */
 }
 
 /* Writes @text to the log file.
@@ -254,7 +254,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     children = fat_tree_flatten_h_children(dir_node);
     child = children;
     while (*child != NULL) {
-        if(strcmp((*child)->name, "fs.log") != 0){
+        if(strcmp((*child)->filepath, "/fs.log") != 0){
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {
                 return -errno;
