@@ -39,7 +39,8 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 static void fat_fuse_log_create(void) {
     fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
     fat_volume vol = get_fat_volume();
-    fat_file log_file = fat_tree_search(vol->file_tree, "/fs.log");
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    fat_file log_file = fat_tree_get_file(log_node);
     log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
     log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM; 
 }
@@ -55,10 +56,6 @@ static void fat_fuse_log_write(char *text) {
 
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
-    if (log_node == NULL) {
-        fat_fuse_log_create();
-        log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
-    }
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
     fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size,
@@ -224,6 +221,13 @@ static void fat_fuse_read_children(fat_tree_node dir_node) {
     for (GList *l = children_list; l != NULL; l = l->next) {
         vol->file_tree =
             fat_tree_insert(vol->file_tree, dir_node, (fat_file)l->data);
+    }
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    if (log_node == NULL) {
+        DEBUG("log doesn't exist");
+        fat_fuse_log_create();
+    } else {
+        DEBUG("log exists");
     }
 }
 
