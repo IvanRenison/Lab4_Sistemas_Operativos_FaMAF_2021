@@ -32,17 +32,20 @@ static inline fat_volume get_fat_volume() {
 
 static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 
-/* Create log file.
- *
- * Must not be executed if log already exists.
+/* Create log file if it does not exist
  */
-static void fat_fuse_log_create(void) {
-    fat_fuse_mknod(strdup("/fs.log"), 0, 0); // 0, 0 are ignored
+static void fat_fuse_log_init(void) {
     fat_volume vol = get_fat_volume();
-    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, strdup("/fs.log"));
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    if (log_node == NULL) {
+        DEBUG("log doesn't exist, creating fs.log");
+        fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
+    }
+
+/*     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
     fat_file log_file = fat_tree_get_file(log_node);
     log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-    log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;  
+    log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;   */
 }
 
 /* Writes @text to the log file.
@@ -51,11 +54,11 @@ static void fat_fuse_log_create(void) {
  *
  * PRE: text != NULL
  */
-static void fat_fuse_log_write(char *text) {
+static void fat_fuse_log_write(const char *text) {
     assert(text != NULL);
 
     fat_volume vol = get_fat_volume();
-    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, strdup("/fs.log"));
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
     fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size,
@@ -124,7 +127,7 @@ static char *str_concat(char *s1, const char *s2) {
  *
  * In case of memory allocation error NULL is returned.
  */
-static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
+static char *fat_fuse_log_creat_string(const char *log_text, fat_file target_file) {
     char *text = now_to_str();
     text = str_concat(text, "\t");
     text = str_concat(text, getlogin());
@@ -141,10 +144,10 @@ static char *fat_fuse_log_creat_string(char *log_text, fat_file target_file) {
  * the message to be logged into fs.log and logs it using
  * fat_fuse_log_write.
  */
-static void fat_fuse_log_activity(char *log_text, fat_file target_file) {
+static void fat_fuse_log_activity(const char *log_text, fat_file target_file) {
     char *text = fat_fuse_log_creat_string(log_text, target_file);
     if (text == NULL) {
-        // In this case no message is logged
+        // In this memory error case no message is logged
         return;
     }
     fat_fuse_log_write(text);
@@ -222,18 +225,14 @@ static void fat_fuse_read_children(fat_tree_node dir_node) {
         vol->file_tree =
             fat_tree_insert(vol->file_tree, dir_node, (fat_file)l->data);
     }
-    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, strdup("/fs.log"));
-    if (log_node == NULL) {
-        DEBUG("log doesn't exist");
-        fat_fuse_log_create();
-    } else {
-        DEBUG("log exists");
-    }
 }
 
 /* Add entries of a directory in @fi to @buf using @filler function. */
 static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                             off_t offset, struct fuse_file_info *fi) {
+    /* FUSE guarantees that fat_fuse_readdir will be called after mounting
+       so we init the log file */
+    fat_fuse_log_init();
     errno = 0;
     fat_tree_node dir_node = (fat_tree_node)fi->fh;
     fat_file dir = fat_tree_get_file(dir_node);
