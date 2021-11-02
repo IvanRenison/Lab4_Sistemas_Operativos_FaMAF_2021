@@ -230,9 +230,6 @@ static void fat_fuse_read_children(fat_tree_node dir_node) {
 /* Add entries of a directory in @fi to @buf using @filler function. */
 static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                             off_t offset, struct fuse_file_info *fi) {
-    /* FUSE guarantees that fat_fuse_readdir will be called after mounting
-       so we init the log file */
-    fat_fuse_log_init();
     errno = 0;
     fat_tree_node dir_node = (fat_tree_node)fi->fh;
     fat_file dir = fat_tree_get_file(dir_node);
@@ -265,6 +262,10 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         }
         child++;
     }
+
+    /* FUSE guarantees that fat_fuse_readdir will be called after mounting
+       so we init the log file */
+    fat_fuse_log_init();
     return 0;
 }
 
