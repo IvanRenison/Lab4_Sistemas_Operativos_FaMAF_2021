@@ -322,9 +322,15 @@ fat_volume fat_volume_mount(const char *volume, int mount_flags) {
     DEBUG("Mounting FAT volume \"%s\"", volume);
 
     vol = calloc(1, sizeof(struct fat_volume_s));
-    vol->table = calloc(1, sizeof(struct fat_table_s));
-    if (!vol)
+    if (vol == NULL) {
         return vol;
+    }
+    vol->table = calloc(1, sizeof(struct fat_table_s));
+    if (vol->table == NULL) {
+        free(vol);
+        vol = NULL;
+        return vol;
+    }
 
     if (mount_flags & FAT_MOUNT_FLAG_READWRITE) {
         open_flags = O_RDWR;
@@ -334,6 +340,7 @@ fat_volume fat_volume_mount(const char *volume, int mount_flags) {
 
     fd = open(volume, open_flags);
     if (fd < 0) {
+        free(vol->table);
         free(vol);
         vol = NULL;
         return vol;
@@ -343,6 +350,7 @@ fat_volume fat_volume_mount(const char *volume, int mount_flags) {
     ret = read_boot_sector(vol, fd);
     if (ret) {
         close(fd);
+        free(vol->table);
         free(vol);
         vol = NULL;
         return vol;
@@ -352,6 +360,7 @@ fat_volume fat_volume_mount(const char *volume, int mount_flags) {
     ret = map_fat(vol, fd, mount_flags);
     if (ret) {
         close(fd);
+        free(vol->table);
         free(vol);
         vol = NULL;
         return vol;
