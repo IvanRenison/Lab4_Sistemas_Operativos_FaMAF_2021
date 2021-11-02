@@ -42,10 +42,10 @@ static void fat_fuse_log_init(void) {
         fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
     }
 
-/*     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
-    fat_file log_file = fat_tree_get_file(log_node);
-    log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-    log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;   */
+    /*     fat_tree_node log_node = fat_tree_node_search(vol->file_tree,
+       "/fs.log"); fat_file log_file = fat_tree_get_file(log_node);
+        log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
+        log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;   */
 }
 
 /* Writes @text to the log file.
@@ -127,7 +127,8 @@ static char *str_concat(char *s1, const char *s2) {
  *
  * In case of memory allocation error NULL is returned.
  */
-static char *fat_fuse_log_creat_string(const char *log_text, fat_file target_file) {
+static char *fat_fuse_log_creat_string(const char *log_text,
+                                       fat_file target_file) {
     char *text = now_to_str();
     text = str_concat(text, "\t");
     text = str_concat(text, getlogin());
@@ -255,7 +256,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     children = fat_tree_flatten_h_children(dir_node);
     child = children;
     while (*child != NULL) {
-        if(strcmp((*child)->filepath, "/fs.log") != 0){
+        if (strcmp((*child)->filepath, "/fs.log") != 0) {
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {
                 return -errno;
@@ -362,7 +363,7 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    char* dir_path = dirname(strdup(path));
+    char *dir_path = dirname(strdup(path));
     parent_node = fat_tree_node_search(vol->file_tree, dir_path);
     free(dir_path);
     if (parent_node == NULL) {
