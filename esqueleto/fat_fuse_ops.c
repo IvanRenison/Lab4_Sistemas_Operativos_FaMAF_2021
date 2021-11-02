@@ -263,6 +263,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         }
         child++;
     }
+    free(children);
 
     /* FUSE guarantees that fat_fuse_readdir will be called after mounting
        so we init the log file */
