@@ -5,6 +5,7 @@
  */
 
 #include <alloca.h>
+#include <assert.h>
 #include <errno.h>
 #include <gmodule.h>
 #include <stdlib.h>
@@ -542,4 +543,14 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
     write_dir_entry(parent, file->dentry, file->pos_in_parent);
 
     return size - bytes_remaining;
+}
+
+void fat_file_hide(fat_file file, fat_file parent) {
+    assert(file != NULL && parent != NULL);
+    DEBUG("Hiding file %s", file->filepath);
+
+    file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
+    file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;
+
+    write_dir_entry(parent, file->dentry, file->pos_in_parent);
 }

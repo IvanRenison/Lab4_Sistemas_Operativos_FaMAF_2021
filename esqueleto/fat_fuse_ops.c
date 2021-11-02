@@ -37,22 +37,34 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 static void fat_fuse_log_init(void) {
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
-    if (log_node == NULL) {
-        DEBUG("log doesn't exist, creating fs.log");
-        fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
+    if (log_node != NULL) {
+        // log_file exist
+        DEBUG("log already exist");
+        return;
+    }
+    DEBUG("log doesn't exist, creating /fs.log");
+    fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
+    // The file should be created correctly, becuse / exist
+
+    log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    assert(log_node != NULL);
+
+    fat_file log_file = fat_tree_get_file(log_node);
+    // It sems like fat_tree_get_file ensures not NULL, but it's not clear
+    assert(log_file != NULL);
+
+    fat_file log_parent = fat_tree_get_parent(log_node);
+    if (log_parent == NULL) {
+        DEBUG("log parent is NULL, can't hide");
+        return;
     }
 
-    /*     fat_tree_node log_node = fat_tree_node_search(vol->file_tree,
-       "/fs.log"); fat_file log_file = fat_tree_get_file(log_node);
-        log_file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-        log_file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;   */
+    fat_file_hide(log_file, log_parent);
 }
 
 /* Writes @text to the log file.
  *
- * If the log file doesn't exists, it's created.
- *
- * PRE: text != NULL
+ * PRE: text != NULL && log file exists
  */
 static void fat_fuse_log_write(const char *text) {
     assert(text != NULL);
