@@ -156,7 +156,9 @@ void fat_file_dentry_add_child(fat_file parent, fat_file child);
  * Returns a GList with references to newly created fat_file.
  * It is not recursive (does not read files in subdirectories).
  * If there is an error in the read operation, sets errno to EIO and returns
- * NULL. Expects @dir to be a directory, not a file.*/
+ * NULL. Expects @dir to be a directory, not a file.
+ * The returned list is owned by the caller but not the references of the list.
+ * */
 GList *fat_file_read_children(fat_file dir);
 
 /********************* DATA OPERATIONS *********************/
