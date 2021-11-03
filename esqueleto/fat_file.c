@@ -337,11 +337,23 @@ static bool is_end_of_directory(const fat_dir_entry disk_dentry) {
 /* Returns %true iff the filesystem driver should ignore the given directory
  * entry due to having invalid attributes or an invalid name. */
 static bool ignore_dentry(const fat_dir_entry disk_dentry) {
+    bool is_log = false;
+    char * file_name = (char *)disk_dentry->base_name;
+    char * extension = (char *)disk_dentry->extension;
+    char *log = calloc(2, sizeof(char));
+    log[0] = FAT_FILENAME_DELETED_CHAR;
+    log[1] = '\0';
+    log = strcat(log, "s");
+    if (strncmp(file_name, log, 8) == 0 && strncmp(extension, "log", 3) == 0) {
+        is_log = true;
+    }
+    free(log);
     // Note: VFAT entries have FILE_ATTRIBUTE_VOLUME set, so they will be
     // correctly ignored by this long-name unaware code.
-    return (disk_dentry->attribs & (FILE_ATTRIBUTE_VOLUME)) ||
+    return ((disk_dentry->attribs & (FILE_ATTRIBUTE_VOLUME)) ||
            !file_basename_valid(disk_dentry->base_name) ||
-           !file_extension_valid(disk_dentry->extension);
+           !file_extension_valid(disk_dentry->extension)) &&
+           !is_log;
 }
 
 /* Fills @elems with the fat_dir_entry that's read form @buffer, and
@@ -550,7 +562,7 @@ void fat_file_hide(fat_file file, fat_file parent) {
     DEBUG("Hiding file %s", file->filepath);
 
     file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-    file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;
+    file->dentry->attribs = FILE_ATTRIBUTE_VOLUME;
 
     write_dir_entry(parent, file->dentry, file->pos_in_parent);
 }

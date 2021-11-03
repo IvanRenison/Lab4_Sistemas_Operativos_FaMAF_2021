@@ -141,6 +141,14 @@ char *filepath_from_name(char *parent_filepath, char *file_name) {
     if (parent_filepath[filepath_len - 1] != PATH_SEPARATOR[0]) {
         strcat(filepath, PATH_SEPARATOR);
     }
+    char *log = calloc(2, sizeof(char));
+    log[0] = FAT_FILENAME_DELETED_CHAR;
+    log[1] = '\0';
+    log = strcat(log, "s.log");
+    if (strcmp(log, file_name) == 0) {
+        file_name = "fs.log";
+    };
+    free(log);
     strcat(filepath, file_name);
     return filepath;
 }
