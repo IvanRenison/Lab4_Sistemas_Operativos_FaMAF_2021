@@ -83,6 +83,11 @@ void fat_table_set_next_cluster(fat_table table, u32 cur_cluster,
  */
 u32 fat_table_seek_cluster(fat_table table, u32 start_cluster, off_t offset);
 
+/* Adds a new cluster to the chain of clusters ending in @last_cluster.
+ * In success returns the new cluster, in error returns FAT_CLUSTER_END_OF_CHAIN.
+ */
+u32 fat_table_add_new_cluster_to_chain(fat_table table, u32 last_cluster);
+
 /* Returns true if @cluster is the end of the cluster chain */
 bool fat_table_is_EOC(fat_table table, u32 cluster);
 

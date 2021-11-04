@@ -530,8 +530,16 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
     if (errno != 0) {
         return 0;
     }
+    if (fat_table_is_EOC(file->table, cluster)) {
+        size_t bytes_per_cluster = fat_table_bytes_per_cluster(file->table);
+        u32 last_cluster = fat_table_seek_cluster(file->table, file->start_cluster, offset - bytes_per_cluster);
+        assert(!fat_table_is_EOC(file->table, last_cluster));
+        cluster = fat_table_add_new_cluster_to_chain(file->table, last_cluster);
+        DEBUG("Adding new cluster %u", cluster);
+    }
 
     while (bytes_remaining > 0 && !fat_table_is_EOC(file->table, cluster)) {
+        // fat_table_is_EOC(file->table, cluster) only in error of finding new cluster
         DEBUG("Next cluster to write %u", cluster);
         bytes_to_write_cluster = fat_table_get_cluster_remaining_bytes(
             file->table, bytes_remaining, offset);
@@ -547,7 +555,14 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
         offset += bytes_written_cluster;
 
         if (bytes_remaining > 0) {
-            cluster = fat_table_get_next_cluster(file->table, cluster);
+            u32 new_cluster = fat_table_get_next_cluster(file->table, cluster);
+            if (fat_table_is_EOC(file->table, new_cluster)) {
+                cluster = fat_table_add_new_cluster_to_chain(file->table, cluster);
+                DEBUG("Adding new cluster %u", cluster);
+            }
+            else {
+                cluster = new_cluster;
+            }
             if (errno != 0) {
                 break;
             }

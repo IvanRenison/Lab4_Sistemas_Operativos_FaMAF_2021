@@ -105,6 +105,17 @@ u32 fat_table_seek_cluster(fat_table table, u32 start_cluster, off_t offset) {
     return start_cluster;
 }
 
+u32 fat_table_add_new_cluster_to_chain(fat_table table, u32 last_cluster) {
+    u32 new_cluster = fat_table_get_next_free_cluster(table);
+    if (fat_table_is_EOC(table, new_cluster)) {
+        // If there's no free clusters return -1
+        return FAT_CLUSTER_END_OF_CHAIN;
+    }
+    fat_table_set_next_cluster(table, last_cluster, new_cluster);
+    fat_table_set_next_cluster(table, new_cluster, FAT_CLUSTER_END_OF_CHAIN);
+    return new_cluster;
+}
+
 bool fat_table_is_EOC(fat_table table, u32 cluster) {
     return cluster == FAT_CLUSTER_END_OF_CHAIN ||
            cluster == FAT_CLUSTER_END_OF_CHAIN2;
