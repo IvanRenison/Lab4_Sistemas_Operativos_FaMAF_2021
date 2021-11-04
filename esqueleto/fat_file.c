@@ -492,10 +492,26 @@ void fat_file_truncate(fat_file file, off_t offset, fat_file parent) {
         last_cluster = next_cluster;
     }
 
-    // Update entrance in directory
+    // Update entrance in directory  
     file->dentry->file_size = offset; // Overwrite with new size
     fill_dentry_time_now(file->dentry, false, true);
     write_dir_entry(parent, file->dentry, file->pos_in_parent);
+}
+
+void fat_file_unlink(fat_file file, fat_file parent) {
+    // Mark as deleted in parent's dentry
+    file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
+    write_dir_entry(parent, file->dentry, file->pos_in_parent);
+
+    // Free clusters
+    u32 last_cluster = file->start_cluster;
+    u32 next_cluster = 0;
+
+    while(!fat_table_is_EOC(file->table, last_cluster)) {
+        next_cluster = fat_table_get_next_cluster(file->table, last_cluster);
+        fat_table_set_next_cluster(file->table, last_cluster, FAT_CLUSTER_FREE);
+        last_cluster = next_cluster;
+    }
 }
 
 ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,

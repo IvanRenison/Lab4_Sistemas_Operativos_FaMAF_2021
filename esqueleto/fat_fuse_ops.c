@@ -77,6 +77,12 @@ static void fat_fuse_log_write(const char *text) {
                     parent);
 }
 
+/* Checks if a given file is fs.log
+ */
+static bool is_fs_log(fat_file file) {
+    return (fat_file_cmp_path(file, "/fs.log") == 0);
+}
+
 /* Creates a string with the current date and time.
  * The string is allocates, and must be freed by the caller.
  * In case of memory allocation error NULL is returned
@@ -268,7 +274,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     children = fat_tree_flatten_h_children(dir_node);
     child = children;
     while (*child != NULL) {
-        if (fat_file_cmp_path(*child, "/fs.log") != 0) {
+        if (!is_fs_log(*child)) {
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {
                 return -errno;
@@ -437,6 +443,30 @@ int fat_fuse_truncate(const char *path, off_t offset) {
     return -errno;
 }
 
+/* Deletes a file (Doesn't work on directories) */
+int fat_fuse_unlink(const char *path) {
+    errno = 0;
+    fat_volume vol = get_fat_volume();
+    fat_tree_node file_node = fat_tree_node_search(vol->file_tree, path);
+    if (file_node == NULL || errno != 0) {
+        errno = ENOENT;
+        return -errno;
+    }
+    fat_file file = fat_tree_get_file(file_node);
+    if (fat_file_is_directory(file)) {
+        errno = EISDIR;
+        return -errno;
+    }
+    if (is_fs_log(file)) {
+        errno = ENOENT;
+        return -errno;
+    }
+
+    fat_file parent = fat_tree_get_parent(file_node);
+    fat_file_unlink(file, parent);
+    return -errno;
+}
+
 /* Filesystem operations for FUSE.  Only some of the possible operations are
  * implemented (the rest stay as NULL pointers and are interpreted as not
  * implemented by FUSE). */
@@ -453,6 +483,7 @@ struct fuse_operations fat_fuse_operations = {
     .releasedir = fat_fuse_releasedir,
     .utime = fat_fuse_utime,
     .truncate = fat_fuse_truncate,
+    .unlink = fat_fuse_unlink,
     .write = fat_fuse_write,
 
 /* We use `struct fat_file_s's as file handles, so we do not need to
