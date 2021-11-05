@@ -394,6 +394,7 @@ int fat_volume_unmount(fat_volume vol) {
     munmap(vol->table->fat_map,
            (size_t)vol->sectors_per_fat << vol->sector_order);
     fat_tree_destroy(vol->file_tree);
+    free(vol->table);
     free(vol);
     return ret;
 }
