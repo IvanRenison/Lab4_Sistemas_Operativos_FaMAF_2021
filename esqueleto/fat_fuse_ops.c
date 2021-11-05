@@ -216,7 +216,9 @@ static int fat_fuse_mkdir(const char *path, mode_t mode) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    parent_node = fat_tree_node_search(vol->file_tree, dirname(strdup(path)));
+    char* copy_path = strdup(path);
+    parent_node = fat_tree_node_search(vol->file_tree, dirname(copy_path));
+    free(copy_path);
     if (parent_node == NULL) {
         errno = ENOENT;
         return -errno;
