@@ -158,6 +158,8 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         }
         child++;
     }
+    free(children);
+
     return 0;
 }
 
