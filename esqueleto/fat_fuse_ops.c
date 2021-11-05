@@ -464,6 +464,7 @@ int fat_fuse_unlink(const char *path) {
 
     fat_file parent = fat_tree_get_parent(file_node);
     fat_file_unlink(file, parent);
+    fat_tree_delete(vol->file_tree, path);
     return -errno;
 }
 

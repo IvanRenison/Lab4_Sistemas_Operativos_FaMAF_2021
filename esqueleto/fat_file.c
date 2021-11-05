@@ -578,7 +578,7 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
     // Update modified time
     fill_dentry_time_now(file->dentry, false, true);
     write_dir_entry(parent, file->dentry, file->pos_in_parent);
-
+    
     return size - bytes_remaining;
 }
 
