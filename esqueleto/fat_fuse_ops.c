@@ -122,6 +122,7 @@ static void fat_fuse_read_children(fat_tree_node dir_node) {
         vol->file_tree =
             fat_tree_insert(vol->file_tree, dir_node, (fat_file)l->data);
     }
+    g_list_free(children_list);
 }
 
 /* Add entries of a directory in @fi to @buf using @filler function. */
