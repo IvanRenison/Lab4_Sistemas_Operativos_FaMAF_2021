@@ -249,7 +249,9 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    parent_node = fat_tree_node_search(vol->file_tree, dirname(strdup(path)));
+    char* dir_path = dirname(strdup(path));
+    parent_node = fat_tree_node_search(vol->file_tree, dir_path);
+    free(dir_path);
     if (parent_node == NULL) {
         errno = ENOENT;
         return -errno;
