@@ -292,7 +292,7 @@ static int map_fat(fat_volume vol, int fd, int mount_flags) {
 
 static fat_file init_root_dir(fat_volume vol) {
     fat_dir_entry root_entry =
-        fat_file_init_direntry(true, strdup("/"), vol->root_dir_start_cluster);
+        fat_file_init_direntry(true, "/", vol->root_dir_start_cluster);
     fat_file root_dir = fat_file_init_empty(true, strdup("/"));
     if (errno != 0) {
         free(root_entry);
