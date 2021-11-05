@@ -107,7 +107,7 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
     *dst_name_p = '\0';
 }
 
-void filename_from_path(char *src_name_p, u8 *base, u8 *extension) {
+void filename_from_path(const char *src_name_p, u8 *base, u8 *extension) {
     unsigned name_len = filename_len(src_name_p, 8);
     if (name_len == 0) { // Empty filename
         *base = '\0';
@@ -133,7 +133,7 @@ void filename_from_path(char *src_name_p, u8 *base, u8 *extension) {
     }
 }
 
-char *filepath_from_name(char *parent_filepath, char *file_name) {
+char *filepath_from_name(const char *parent_filepath, const char *file_name) {
     unsigned filepath_len = strlen(parent_filepath);
     unsigned name_len = strlen(file_name);
     char *filepath = calloc(filepath_len + name_len + 1, sizeof(char));

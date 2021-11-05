@@ -97,7 +97,7 @@ struct fat_file_s {
 /* Returns an new directory entry with default values.
  * Caller is still owner of @filepath reference.
  */
-fat_dir_entry fat_file_init_direntry(bool is_dir, char *filepath,
+fat_dir_entry fat_file_init_direntry(bool is_dir, const char *filepath,
                                      u32 start_cluster);
 
 /* Inits a file without direntry. Can be used to create root file.
