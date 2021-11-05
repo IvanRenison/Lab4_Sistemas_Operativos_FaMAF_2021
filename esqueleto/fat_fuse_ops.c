@@ -154,6 +154,8 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     while (*child != NULL) {
         error = (*filler)(buf, (*child)->name, NULL, 0);
         if (error != 0) {
+            free(children);
+            children = NULL;
             return -errno;
         }
         child++;
