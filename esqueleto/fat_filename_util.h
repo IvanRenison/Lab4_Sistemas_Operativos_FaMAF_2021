@@ -36,11 +36,11 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
  * extension. Returns the base and the extension with u8 type, compatible with
  * fat_dir_entry.
  */
-void filename_from_path(char *src_name_p, u8 *base, u8 *extension);
+void filename_from_path(const char *src_name_p, u8 *base, u8 *extension);
 
 /* Returns a new allocated string with the full filepath for file
  * @file_name in directory @parent_filepath. The caller owns the reference.
  */
-char *filepath_from_name(char *parent_filepath, char *file_name);
+char *filepath_from_name(const char *parent_filepath, const char *file_name);
 
 #endif /* _FAT_FILENAME_UTIL_H */
