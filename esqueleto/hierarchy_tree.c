@@ -170,6 +170,11 @@ static void remove_child_from_h(h_tree h_child) {
         errno = EINVAL;
         return;
     }
+    if (child_iterator == h_child) {
+        // It's the first child of parent's chain
+        h_child->h_parent->h_children = h_child->h_next_sibling;
+        return;
+    }
     while (child_iterator->h_next_sibling != h_child &&
            child_iterator->h_next_sibling != NULL) {
         child_iterator = child_iterator->h_next_sibling;
