@@ -98,9 +98,11 @@ fat_dir_entry fat_file_init_direntry(bool is_dir, char *filepath,
         errno = ENOSPC;
         return NULL;
     }
+    char *filepath_copy = strdup(filepath);
     // Calculate filename and extension. Save into disk entry structure
-    filename_from_path(basename(strdup(filepath)), new_entry->base_name,
+    filename_from_path(basename(filepath_copy), new_entry->base_name,
                        new_entry->extension);
+    free(filepath_copy);
     if (is_dir) {
         new_entry->attribs = FILE_ATTRIBUTE_DIRECTORY;
     } else {
