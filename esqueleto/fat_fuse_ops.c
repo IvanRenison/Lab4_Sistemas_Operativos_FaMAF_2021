@@ -283,6 +283,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         child++;
     }
     free(children);
+    children = NULL;
 
     /* FUSE guarantees that fat_fuse_readdir will be called after mounting
        so we init the log file */
@@ -348,7 +349,10 @@ static int fat_fuse_mkdir(const char *path, mode_t mode) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    parent_node = fat_tree_node_search(vol->file_tree, dirname(strdup(path)));
+    char* copy_path = strdup(path);
+    parent_node = fat_tree_node_search(vol->file_tree, dirname(copy_path));
+    free(copy_path);
+    copy_path = NULL;
     if (parent_node == NULL) {
         errno = ENOENT;
         return -errno;
@@ -384,6 +388,7 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev) {
     char* copy_path = strdup(path);
     parent_node = fat_tree_node_search(vol->file_tree, dirname(copy_path));
     free(copy_path);
+    copy_path = NULL;
     if (parent_node == NULL) {
         errno = ENOENT;
         return -errno;

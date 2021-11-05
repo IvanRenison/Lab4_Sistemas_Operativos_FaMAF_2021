@@ -104,6 +104,7 @@ fat_dir_entry fat_file_init_direntry(bool is_dir, const char *filepath,
     filename_from_path(basename(filepath_copy), new_entry->base_name,
                        new_entry->extension);
     free(filepath_copy);
+    filepath_copy = NULL;
     if (is_dir) {
         new_entry->attribs = FILE_ATTRIBUTE_DIRECTORY;
     } else {
