@@ -91,7 +91,7 @@ static u32 file_start_cluster(fat_dir_entry disk_dentry) {
 /* Returns an new directory entry with default values.
  * Values to fill depending on fat_file: start_cluster
  */
-fat_dir_entry fat_file_init_direntry(bool is_dir, char *filepath,
+fat_dir_entry fat_file_init_direntry(bool is_dir, const char *filepath,
                                      u32 start_cluster) {
     fat_dir_entry new_entry = calloc(1, sizeof(struct fat_dir_entry_s));
     if (new_entry == NULL) {
