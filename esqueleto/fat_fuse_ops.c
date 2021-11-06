@@ -349,7 +349,7 @@ static int fat_fuse_mkdir(const char *path, mode_t mode) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    char* copy_path = strdup(path);
+    char *copy_path = strdup(path);
     parent_node = fat_tree_node_search(vol->file_tree, dirname(copy_path));
     free(copy_path);
     copy_path = NULL;
@@ -385,7 +385,7 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev) {
 
     // The system has already checked the path does not exist. We get the parent
     vol = get_fat_volume();
-    char* copy_path = strdup(path);
+    char *copy_path = strdup(path);
     parent_node = fat_tree_node_search(vol->file_tree, dirname(copy_path));
     free(copy_path);
     copy_path = NULL;
@@ -473,6 +473,40 @@ int fat_fuse_unlink(const char *path) {
     return -errno;
 }
 
+/* Removes a directorie if it is empty */
+static int fat_fuse_rmdir(const char *path) {
+    errno = 0;
+    fat_volume vol = get_fat_volume();
+    fat_tree_node file_node = fat_tree_node_search(vol->file_tree, path);
+    if (file_node == NULL || errno != 0) {
+        errno = ENOENT;
+        return -errno;
+    }
+    fat_file dir = fat_tree_get_file(file_node);
+    if (!fat_file_is_directory(dir)) {
+        errno = ENOTDIR;
+        return -errno;
+    }
+
+    GList *children = fat_file_read_children(dir);
+    bool is_empty = g_list_length(children) == 0;
+    g_list_free(children);
+    if (!is_empty) {
+        errno = ENOTEMPTY;
+        return -errno;
+    }
+
+    fat_file parent = fat_tree_get_parent(file_node);
+    if (parent == NULL) {
+        errno = EBUSY;
+        return -errno;
+    }
+
+    fat_file_unlink(dir, parent);
+    fat_tree_delete(vol->file_tree, path);
+    return -errno;
+}
+
 /* Filesystem operations for FUSE.  Only some of the possible operations are
  * implemented (the rest stay as NULL pointers and are interpreted as not
  * implemented by FUSE). */
@@ -490,6 +524,7 @@ struct fuse_operations fat_fuse_operations = {
     .utime = fat_fuse_utime,
     .truncate = fat_fuse_truncate,
     .unlink = fat_fuse_unlink,
+    .rmdir = fat_fuse_rmdir,
     .write = fat_fuse_write,
 
 /* We use `struct fat_file_s's as file handles, so we do not need to
