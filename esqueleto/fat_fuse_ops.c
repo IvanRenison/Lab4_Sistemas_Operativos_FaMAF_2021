@@ -277,6 +277,8 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         if (!is_fs_log(*child)) {
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {
+                free(children);
+                children = NULL;
                 return -errno;
             }
         }
