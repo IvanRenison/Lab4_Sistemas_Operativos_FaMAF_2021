@@ -181,7 +181,8 @@ ssize_t fat_file_pread(fat_file file, void *buf, size_t size, off_t offset,
 void fat_file_truncate(fat_file file, off_t offset, fat_file parent);
 
 /* Deletes a @file from the FAT table and marck's it's direntry in @parent as
- * deletd. @file should not be a directory, but no checks are made.
+ * deletd. If @file is a directory, the childs are not deleted, so it should
+ * be empty.
  */
 void fat_file_unlink(fat_file file, fat_file parent);
 
