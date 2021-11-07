@@ -45,7 +45,7 @@ static void fat_fuse_log_init(void) {
         DEBUG("log already exist");
         return;
     }
-    DEBUG("log doesn't exist, creating "LOG_FILEPATH);
+    DEBUG("log doesn't exist, creating " LOG_FILEPATH);
     fat_fuse_mknod(LOG_FILEPATH, 0, 0); // 0, 0 are ignored
     // The file should be created correctly, becuse / exist
 
@@ -183,7 +183,8 @@ static char *fat_fuse_log_creat_string(const char *log_text,
  * the message to be logged into fs.log and logs it using
  * fat_fuse_log_write.
  */
-static void fat_fuse_log_activity(const char *log_text, fat_file target_file, GSList *words) {
+static void fat_fuse_log_activity(const char *log_text, fat_file target_file,
+                                  GSList *words) {
     char *text = fat_fuse_log_creat_string(log_text, target_file, words);
     if (text == NULL) {
         // In this memory error case no message is logged
@@ -559,7 +560,7 @@ struct fuse_operations fat_fuse_operations = {
     .opendir = fat_fuse_opendir,
     .mkdir = fat_fuse_mkdir,
     .mknod = fat_fuse_mknod,
-    .read = fat_fuse_read,  
+    .read = fat_fuse_read,
     .readdir = fat_fuse_readdir,
     .release = fat_fuse_release,
     .releasedir = fat_fuse_releasedir,

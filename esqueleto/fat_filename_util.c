@@ -94,9 +94,8 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
         name_len = 1;
         dst_name_p++;
         src_name_p++;
-    }
-    else {
-    // Get the base name of the file or directory
+    } else {
+        // Get the base name of the file or directory
         name_len = filename_len((char *)src_name_p, max_length);
         if (name_len == 0) {
             *dst_name_p = '/';
@@ -119,7 +118,7 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
             extension_len--;
         } while (extension_len > 0);
     }
-    
+
     *dst_name_p = '\0';
 }
 
