@@ -304,6 +304,11 @@ static int fat_fuse_read(const char *path, char *buf, size_t size, off_t offset,
     fat_file file = fat_tree_get_file(file_node);
     fat_file parent = fat_tree_get_parent(file_node);
 
+    if (is_fs_log(file) && log_hide) {
+        errno = ENOENT;
+        return -errno;
+    }
+
     bytes_read = fat_file_pread(file, buf, size, offset, parent);
     if (errno != 0) {
         return -errno;
@@ -320,6 +325,11 @@ static int fat_fuse_write(const char *path, const char *buf, size_t size,
     fat_tree_node file_node = (fat_tree_node)fi->fh;
     fat_file file = fat_tree_get_file(file_node);
     fat_file parent = fat_tree_get_parent(file_node);
+
+    if (is_fs_log(file) && log_hide) {
+        errno = ENOENT;
+        return -errno;
+    }
 
     if (size == 0)
         return 0; // Nothing to write
@@ -438,6 +448,12 @@ int fat_fuse_truncate(const char *path, off_t offset) {
     fat_volume vol = get_fat_volume();
     fat_file file = NULL, parent = NULL;
     fat_tree_node file_node = fat_tree_node_search(vol->file_tree, path);
+
+    if (is_fs_log(file)) {
+        errno = ENOENT;
+        return -errno;
+    }
+
     if (file_node == NULL || errno != 0) {
         errno = ENOENT;
         return -errno;
