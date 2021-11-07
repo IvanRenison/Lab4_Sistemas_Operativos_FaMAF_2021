@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "big_brother.h"
 #include "fat_file.h"
 #include "fat_filename_util.h"
 #include "fat_table.h"
@@ -340,10 +341,11 @@ static bool is_end_of_directory(const fat_dir_entry disk_dentry) {
 /* Returns %true iff the filesystem driver should ignore the given directory
  * entry due to having invalid attributes or an invalid name. */
 static bool ignore_dentry(const fat_dir_entry disk_dentry) {
-    char log_name[] = "fs";
+    char log_name[] = LOG_FILE_BASENAME;
     log_name[0] = (char)FAT_FILENAME_DELETED_CHAR;
-    bool is_log = strncmp((char *)disk_dentry->base_name, log_name, 8) == 0 &&
-                  strncmp((char *)disk_dentry->extension, "log", 3) == 0;
+    bool is_log =
+        strncmp((char *)disk_dentry->base_name, log_name, 8) == 0 &&
+        strncmp((char *)disk_dentry->extension, LOG_FILE_EXTENSION, 3) == 0;
 
     // Note: VFAT entries have FILE_ATTRIBUTE_VOLUME set, so they will be
     // correctly ignored by this long-name unaware code.

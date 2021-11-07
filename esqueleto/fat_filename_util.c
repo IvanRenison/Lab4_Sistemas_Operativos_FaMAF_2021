@@ -1,9 +1,9 @@
 #include "fat_filename_util.h"
+#include "big_brother.h"
 #include <stdio.h>
 
 /* Flag indicating that the character is legal to use in a filename */
 #define FAT_CHAR_LEGAL_IN_FILENAME 0x1
-#define PATH_SEPARATOR "/"
 
 /* Table of 1-byte characters and their interpretations in the FAT filesystem.
  */
@@ -84,9 +84,9 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
     unsigned extension_len;
     int max_length = 8;
     // Check if src_name_p is 0xe5 ++ s
-    char log_name[] = "fs";
+    char log_name[] = LOG_FILE_BASENAME;
     log_name[0] = (char)FAT_FILENAME_DELETED_CHAR;
-    char log_extension[] = "log";
+    char log_extension[] = LOG_FILE_EXTENSION;
     if (strncmp(log_name, (char *)src_name_p, 8) == 0 &&
         strncmp(log_extension, (char *)src_extension_p, 3) == 0) {
         // This is the log file

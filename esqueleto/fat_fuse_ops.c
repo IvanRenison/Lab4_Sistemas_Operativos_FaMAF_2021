@@ -6,6 +6,7 @@
 
 #include "fat_fuse_ops.h"
 
+#include "big_brother.h"
 #include "fat_file.h"
 #include "fat_filename_util.h"
 #include "fat_fs_tree.h"
@@ -38,17 +39,17 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
  */
 static void fat_fuse_log_init(void) {
     fat_volume vol = get_fat_volume();
-    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
     if (log_node != NULL) {
         // log_file exist
         DEBUG("log already exist");
         return;
     }
-    DEBUG("log doesn't exist, creating /fs.log");
-    fat_fuse_mknod("/fs.log", 0, 0); // 0, 0 are ignored
+    DEBUG("log doesn't exist, creating "LOG_FILEPATH);
+    fat_fuse_mknod(LOG_FILEPATH, 0, 0); // 0, 0 are ignored
     // The file should be created correctly, becuse / exist
 
-    log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
     assert(log_node != NULL);
 
     fat_file log_file = fat_tree_get_file(log_node);
@@ -72,7 +73,7 @@ static void fat_fuse_log_write(const char *text) {
     assert(text != NULL);
 
     fat_volume vol = get_fat_volume();
-    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, "/fs.log");
+    fat_tree_node log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
     fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size,
@@ -82,7 +83,7 @@ static void fat_fuse_log_write(const char *text) {
 /* Checks if a given file is fs.log
  */
 static bool is_fs_log(fat_file file) {
-    return (fat_file_cmp_path(file, "/fs.log") == 0);
+    return (fat_file_cmp_path(file, LOG_FILEPATH) == 0);
 }
 
 /* Creates a string with the current date and time.
