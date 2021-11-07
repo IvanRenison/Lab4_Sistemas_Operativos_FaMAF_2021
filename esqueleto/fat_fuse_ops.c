@@ -81,8 +81,10 @@ static void fat_fuse_log_write(const char *text) {
 }
 
 /* Checks if a given file is fs.log
+ * PRE: @file != NULL
  */
 static bool is_fs_log(fat_file file) {
+    assert(file != NULL);
     return (fat_file_cmp_path(file, LOG_FILEPATH) == 0);
 }
 
@@ -149,7 +151,7 @@ static char *str_concat(char *s1, const char *s2) {
  * In case of memory allocation error NULL is returned.
  */
 static char *fat_fuse_log_creat_string(const char *log_text,
-                                       fat_file target_file) {
+                                       fat_file target_file, GSList *words) {
     char *text = now_to_str();
     text = str_concat(text, "\t");
     text = str_concat(text, getlogin());
@@ -157,6 +159,21 @@ static char *fat_fuse_log_creat_string(const char *log_text,
     text = str_concat(text, target_file->filepath);
     text = str_concat(text, "\t");
     text = str_concat(text, log_text);
+    text = str_concat(text, "\t");
+
+    if (words != NULL) {
+        DEBUG("Censored words finded in %s", target_file->filepath);
+        text = str_concat(text, "[");
+        while (words != NULL) {
+            text = str_concat(text, words->data);
+            words = words->next;
+            if (words != NULL) {
+                text = str_concat(text, ", ");
+            }
+        }
+        text = str_concat(text, "]");
+    }
+
     text = str_concat(text, "\n");
 
     return (text);
@@ -166,8 +183,8 @@ static char *fat_fuse_log_creat_string(const char *log_text,
  * the message to be logged into fs.log and logs it using
  * fat_fuse_log_write.
  */
-static void fat_fuse_log_activity(const char *log_text, fat_file target_file) {
-    char *text = fat_fuse_log_creat_string(log_text, target_file);
+static void fat_fuse_log_activity(const char *log_text, fat_file target_file, GSList *words) {
+    char *text = fat_fuse_log_creat_string(log_text, target_file, words);
     if (text == NULL) {
         // In this memory error case no message is logged
         return;
@@ -315,7 +332,9 @@ static int fat_fuse_read(const char *path, char *buf, size_t size, off_t offset,
         return -errno;
     }
 
-    fat_fuse_log_activity("read", file);
+    GSList *censored_words = censored_words_found(buf, size);
+    fat_fuse_log_activity("read", file, censored_words);
+    g_slist_free(censored_words);
 
     return bytes_read;
 }
@@ -337,7 +356,9 @@ static int fat_fuse_write(const char *path, const char *buf, size_t size,
     if (offset > file->dentry->file_size)
         return -EOVERFLOW;
 
-    fat_fuse_log_activity("write", file);
+    GSList *censored_words = censored_words_found(buf, size);
+    fat_fuse_log_activity("write", file, censored_words);
+    g_slist_free(censored_words);
 
     return fat_file_pwrite(file, buf, size, offset, parent);
 }
@@ -450,11 +471,6 @@ int fat_fuse_truncate(const char *path, off_t offset) {
     fat_file file = NULL, parent = NULL;
     fat_tree_node file_node = fat_tree_node_search(vol->file_tree, path);
 
-    if (is_fs_log(file)) {
-        errno = ENOENT;
-        return -errno;
-    }
-
     if (file_node == NULL || errno != 0) {
         errno = ENOENT;
         return -errno;
@@ -462,6 +478,11 @@ int fat_fuse_truncate(const char *path, off_t offset) {
     file = fat_tree_get_file(file_node);
     if (fat_file_is_directory(file))
         return -EISDIR;
+
+    if (is_fs_log(file)) {
+        errno = ENOENT;
+        return -errno;
+    }
 
     parent = fat_tree_get_parent(file_node);
     fat_tree_inc_num_times_opened(file_node);
