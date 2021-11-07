@@ -83,18 +83,31 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
     unsigned name_len;
     unsigned extension_len;
     int max_length = 8;
-    // Get the base name of the file or directory
-    name_len = filename_len((char *)src_name_p, max_length);
-    if (name_len == 0) {
-        *dst_name_p = '/';
+    // Check if src_name_p is 0xe5 ++ s
+    char log_name[] = "fs";
+    log_name[0] = (char)FAT_FILENAME_DELETED_CHAR;
+    char log_extension[] = "log";
+    if (strncmp(log_name, (char *)src_name_p, 8) == 0 &&
+        strncmp(log_extension, (char *)src_extension_p, 3) == 0) {
+        *dst_name_p = 'f';
+        name_len = 1;
         dst_name_p++;
-        *dst_name_p = '\0';
-        return;
+        src_name_p++;
+    }
+    else {
+    // Get the base name of the file or directory
+        name_len = filename_len((char *)src_name_p, max_length);
+        if (name_len == 0) {
+            *dst_name_p = '/';
+            dst_name_p++;
+            *dst_name_p = '\0';
+            return;
+        }
     }
     do {
         *dst_name_p++ = *src_name_p++;
-    } while (--name_len);
-
+        name_len--;
+    } while (name_len > 0);
     // Append extension, if present, to the base name
     extension_len = filename_len((char *)src_extension_p, 3);
     if (extension_len) {
@@ -102,8 +115,10 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
         src_name_p = src_extension_p;
         do {
             *dst_name_p++ = *src_name_p++;
-        } while (--extension_len);
+            extension_len--;
+        } while (extension_len > 0);
     }
+    
     *dst_name_p = '\0';
 }
 
@@ -141,11 +156,11 @@ char *filepath_from_name(const char *parent_filepath, const char *file_name) {
     if (parent_filepath[filepath_len - 1] != PATH_SEPARATOR[0]) {
         strcat(filepath, PATH_SEPARATOR);
     }
-    char log[] = "fs.log";
+/*     char log[] = "fs.log";
     log[0] = (char)FAT_FILENAME_DELETED_CHAR;
     if (strcmp(log, file_name) == 0) {
         file_name = "fs.log";
-    }
+    } */
     strcat(filepath, file_name);
     return filepath;
 }

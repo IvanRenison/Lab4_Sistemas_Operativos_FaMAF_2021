@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+bool log_hide = true;
+
 /* Retrieve the currently mounted FAT volume from the FUSE context. */
 static inline fat_volume get_fat_volume() {
     return fuse_get_context()->private_data;
@@ -274,7 +276,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     children = fat_tree_flatten_h_children(dir_node);
     child = children;
     while (*child != NULL) {
-        if (!is_fs_log(*child)) {
+        if (!log_hide || !is_fs_log(*child)) {
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {
                 free(children);
@@ -519,7 +521,7 @@ struct fuse_operations fat_fuse_operations = {
     .opendir = fat_fuse_opendir,
     .mkdir = fat_fuse_mkdir,
     .mknod = fat_fuse_mknod,
-    .read = fat_fuse_read,
+    .read = fat_fuse_read,  
     .readdir = fat_fuse_readdir,
     .release = fat_fuse_release,
     .releasedir = fat_fuse_releasedir,

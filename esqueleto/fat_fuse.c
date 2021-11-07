@@ -14,22 +14,23 @@
 
 static void usage() {
     const char *usage_str =
-        "Usage: fat-fuse [-f] [-d] [-r] VOLUME MOUNTPOINT\n";
+        "Usage: fat-fuse [-f] [-d] [-r] [-l] VOLUME MOUNTPOINT\n";
     fputs(usage_str, stdout);
 }
 
 static void usage_short() {
     const char *usage_str =
-        "Usage: fat-fuse [-f] [-d] [-r] VOLUME MOUNTPOINT\n";
+        "Usage: fat-fuse [-f] [-d] [-r] [-l] VOLUME MOUNTPOINT\n";
     fputs(usage_str, stderr);
 }
 
-static const char *shortopts = "dfhr";
+static const char *shortopts = "dfhrl";
 static const struct option longopts[] = {
     {"debug", no_argument, NULL, 'd'},
     {"foreground", no_argument, NULL, 'f'},
     {"help", no_argument, NULL, 'h'},
     {"readonly", no_argument, NULL, 'r'},
+    {"logshow", no_argument, NULL, 'l'},
     {NULL, 0, NULL, 0},
 };
 
@@ -58,6 +59,9 @@ int main(int argc, char **argv) {
             return 0;
         case 'r':
             mount_flags = FAT_MOUNT_FLAG_READONLY;
+            break;
+        case 'l':
+            log_hide = false;
             break;
         default:
             usage_short();
