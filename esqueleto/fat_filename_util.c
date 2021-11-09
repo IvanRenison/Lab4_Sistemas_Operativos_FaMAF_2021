@@ -44,7 +44,7 @@ static bool char_legal_in_filename(char c) {
 bool file_basename_valid(const u8 base_name[8]) {
     unsigned i;
     if (base_name[0] == '\0' || base_name[0] == 0xe5) {
-        // End of directory, or name starts with space, or free directory entry
+        // End of directory, or free directory entry
         return false;
     }
 
@@ -69,12 +69,10 @@ bool file_extension_valid(const u8 extension[3]) {
 }
 
 unsigned filename_len(const char *name, unsigned max_len) {
-    unsigned len = max_len;
-    do {
-        if (name[len - 1] != '\0')
-            break;
-        len--;
-    } while (len > 0);
+    unsigned len = 0;
+    while (len < max_len && name[len] != '\0') {
+        len++;
+    }
     return len;
 }
 
@@ -120,12 +118,12 @@ void filename_from_path(const char *src_name_p, u8 *base, u8 *extension) {
         base[i] = src_name_p[i];
         i++;
     } while (i < name_len && (src_name_p + i) != dot_pos);
-    if (dot_pos != NULL && i < name_len) { // There is an extension to copy
+    if (dot_pos != NULL) { // There is an extension to copy
+        unsigned int extension_len = filename_len(dot_pos + 1, 3);
         i++;                               // Skip dot position
-        while (j < 3 && src_name_p[i] != '\0') {
+        for (j = 0; j < extension_len; j++) {
             extension[j] = src_name_p[i];
             i++;
-            j++;
         }
     }            // else: no dot => empty extension
     if (j < 3) { // extension was too short, fill with end of string
