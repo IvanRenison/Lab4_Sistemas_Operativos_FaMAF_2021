@@ -119,8 +119,8 @@ void filename_from_path(const char *src_name_p, u8 *base, u8 *extension) {
         i++;
     } while (i < name_len && (src_name_p + i) != dot_pos);
     if (dot_pos != NULL) { // There is an extension to copy
-        unsigned int extension_len = filename_len(dot_pos + 1, 3);
-        i++;                               // Skip dot position
+        unsigned extension_len = filename_len(dot_pos + 1, 3);
+        i++; // Skip dot position
         for (j = 0; j < extension_len; j++) {
             extension[j] = src_name_p[i];
             i++;
