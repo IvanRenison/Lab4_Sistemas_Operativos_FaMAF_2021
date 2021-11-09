@@ -536,7 +536,7 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
 
     // Update new file size
     if (original_offset + size - bytes_remaining > file->dentry->file_size) {
-        file->dentry->file_size = offset + size - bytes_remaining;
+        file->dentry->file_size = original_offset + size - bytes_remaining;
     }
     // TODO if this operation fails, then the FAT table and the file's parent
     // entry are left on an incosistent state. FIXME
