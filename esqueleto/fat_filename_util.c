@@ -43,7 +43,7 @@ static bool char_legal_in_filename(char c) {
 
 bool file_basename_valid(const u8 base_name[8]) {
     unsigned i;
-    if (base_name[0] == '\0' || base_name[0] == ' ' || base_name[0] == 0xe5) {
+    if (base_name[0] == '\0' || base_name[0] == 0xe5) {
         // End of directory, or name starts with space, or free directory entry
         return false;
     }
@@ -54,13 +54,13 @@ bool file_basename_valid(const u8 base_name[8]) {
         if (!char_legal_in_filename(base_name[i]))
             return false;
         i++;
-    } while (i != 8 && base_name[i] != '\0' && base_name[i] != ' ');
+    } while (i != 8 && base_name[i] != '\0');
     return true;
 }
 
 bool file_extension_valid(const u8 extension[3]) {
     unsigned i;
-    for (i = 0; i < 3 && extension[i] != '\0' && extension[i] != ' '; i++) {
+    for (i = 0; i < 3 && extension[i] != '\0'; i++) {
         if (!char_legal_in_filename(extension[i])) {
             return false;
         }
@@ -71,7 +71,7 @@ bool file_extension_valid(const u8 extension[3]) {
 unsigned filename_len(const char *name, unsigned max_len) {
     unsigned len = max_len;
     do {
-        if (name[len - 1] != ' ' && name[len - 1] != '\0')
+        if (name[len - 1] != '\0')
             break;
         len--;
     } while (len > 0);
@@ -122,7 +122,7 @@ void filename_from_path(const char *src_name_p, u8 *base, u8 *extension) {
     } while (i < name_len && (src_name_p + i) != dot_pos);
     if (dot_pos != NULL && i < name_len) { // There is an extension to copy
         i++;                               // Skip dot position
-        while (src_name_p[i] != ' ' && src_name_p[i] != '\0') {
+        while (j < 3 && src_name_p[i] != '\0') {
             extension[j] = src_name_p[i];
             i++;
             j++;
