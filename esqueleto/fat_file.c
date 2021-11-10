@@ -594,7 +594,7 @@ void fat_file_hide(fat_file file, fat_file parent) {
     DEBUG("Hiding file %s", file->filepath);
 
     file->dentry->base_name[0] = FAT_FILENAME_DELETED_CHAR;
-    file->dentry->attribs = FILE_ATTRIBUTE_VOLUME;
+    file->dentry->attribs = FILE_ATTRIBUTE_SYSTEM;
 
     write_dir_entry(parent, file->dentry, file->pos_in_parent);
 }

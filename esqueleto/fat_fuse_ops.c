@@ -150,19 +150,19 @@ static char *str_concat(char *s1, const char *s2) {
  *
  * In case of memory allocation error NULL is returned.
  */
-static char *fat_fuse_log_creat_string(const char *log_text,
+static char *fat_fuse_log_create_string(const char *log_text,
                                        fat_file target_file, GSList *words) {
     char *text = now_to_str();
     text = str_concat(text, "\t");
     text = str_concat(text, getlogin());
     text = str_concat(text, "\t");
-    text = str_concat(text, target_file->filepath);
-    text = str_concat(text, "\t");
     text = str_concat(text, log_text);
     text = str_concat(text, "\t");
+    text = str_concat(text, target_file->filepath);
+    text = str_concat(text, "\t");
 
-    if (words != NULL) {
-        DEBUG("Censored words finded in %s", target_file->filepath);
+    if (words != NULL && !is_fs_log(target_file)) {
+        DEBUG("Censored words found in %s", target_file->filepath);
         text = str_concat(text, "[");
         while (words != NULL) {
             text = str_concat(text, words->data);
@@ -179,13 +179,13 @@ static char *fat_fuse_log_creat_string(const char *log_text,
     return (text);
 }
 
-/* Makes a call to fat_fuse_log_creat_string to receive
+/* Makes a call to fat_fuse_log_create_string to receive
  * the message to be logged into fs.log and logs it using
  * fat_fuse_log_write.
  */
 static void fat_fuse_log_activity(const char *log_text, fat_file target_file,
                                   GSList *words) {
-    char *text = fat_fuse_log_creat_string(log_text, target_file, words);
+    char *text = fat_fuse_log_create_string(log_text, target_file, words);
     if (text == NULL) {
         // In this memory error case no message is logged
         return;
@@ -516,7 +516,7 @@ int fat_fuse_unlink(const char *path) {
     return -errno;
 }
 
-/* Removes a directorie if it is empty */
+/* Removes a directory if it is empty */
 static int fat_fuse_rmdir(const char *path) {
     errno = 0;
     fat_volume vol = get_fat_volume();
