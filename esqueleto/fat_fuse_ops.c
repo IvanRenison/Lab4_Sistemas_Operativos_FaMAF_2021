@@ -151,13 +151,22 @@ static char *str_concat(char *s1, const char *s2) {
  * In case of memory allocation error NULL is returned.
  */
 static char *fat_fuse_log_create_string(const char *log_text,
-                                       fat_file target_file, GSList *words) {
+                                        fat_file target_file, GSList *words) {
     char *text = now_to_str();
     text = str_concat(text, "\t");
-    text = str_concat(text, getlogin());
+
+    char *user_name = getlogin();
+    if (user_name != NULL) {
+        text = str_concat(text, user_name);
+    } else {
+        DEBUG("Unable to get user name\n");
+        text = str_concat(text, "\t");
+    }
     text = str_concat(text, "\t");
+
     text = str_concat(text, log_text);
     text = str_concat(text, "\t");
+
     text = str_concat(text, target_file->filepath);
     text = str_concat(text, "\t");
 
