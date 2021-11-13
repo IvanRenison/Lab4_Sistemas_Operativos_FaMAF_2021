@@ -4,7 +4,6 @@
  * Functions to operate over files and directories.
  */
 
-#include <alloca.h>
 #include <assert.h>
 #include <errno.h>
 #include <gmodule.h>

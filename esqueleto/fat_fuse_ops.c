@@ -12,7 +12,6 @@
 #include "fat_fs_tree.h"
 #include "fat_util.h"
 #include "fat_volume.h"
-#include <alloca.h>
 #include <assert.h>
 #include <errno.h>
 #include <gmodule.h>
