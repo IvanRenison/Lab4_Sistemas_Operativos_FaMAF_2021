@@ -30,7 +30,6 @@ static inline fat_volume get_fat_volume() {
     return fuse_get_context()->private_data;
 }
 
-#define LOG_MESSAGE_SIZE 100
 #define DATE_MESSAGE_SIZE 30
 
 static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
@@ -38,19 +37,27 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
 /* Create log file if it does not exist
  */
 static void fat_fuse_log_init(void) {
+    int starting_errno = errno;
+    errno = 0; // We wan't to creat fs.log, no matter of previos errors
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
     if (log_node != NULL) {
         // log_file exist
         DEBUG("log already exist");
+        errno = starting_errno;
         return;
     }
     DEBUG("log doesn't exist, creating " LOG_FILEPATH);
-    fat_fuse_mknod(LOG_FILEPATH, 0, 0); // 0, 0 are ignored
-    // The file should be created correctly, becuse / exist
+
+    int mknod_exit = fat_fuse_mknod(LOG_FILEPATH, 0, 0); // 0, 0 are ignored
+    if (mknod_exit != 0) {
+        DEBUG("Aneble to creat " LOG_FILEPATH);
+        errno = starting_errno;
+        return;
+    }
 
     log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
-    assert(log_node != NULL);
+    assert(log_node != NULL); // We just created it
 
     fat_file log_file = fat_tree_get_file(log_node);
     // It sems like fat_tree_get_file ensures not NULL, but it's not clear
@@ -59,10 +66,13 @@ static void fat_fuse_log_init(void) {
     fat_file log_parent = fat_tree_get_parent(log_node);
     if (log_parent == NULL) {
         DEBUG("log parent is NULL, can't hide");
+        errno = starting_errno;
         return;
     }
 
     fat_file_hide(log_file, log_parent);
+
+    errno = starting_errno;
 }
 
 /* Writes @text to the log file.
@@ -74,6 +84,10 @@ static void fat_fuse_log_write(const char *text) {
 
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
+    if (log_node == NULL) {
+        DEBUG(LOG_FILEPATH "doesn't exist, can't log");
+        return;
+    }
     fat_file log_file = fat_tree_get_file(log_node);
     fat_file parent = fat_tree_get_parent(log_node);
     fat_file_pwrite(log_file, text, strlen(text), log_file->dentry->file_size,
