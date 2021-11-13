@@ -195,15 +195,19 @@ static char *fat_fuse_log_create_string(const char *log_text,
 static void fat_fuse_log_activity(const char *log_text, fat_file target_file,
                                   GSList *words) {
     int starting_errno = errno;
+    errno = 0; // We wan't to log, no matter of previos errors
     char *text = fat_fuse_log_create_string(log_text, target_file, words);
-    errno = starting_errno;
-    // Log may have changed errno, but we don't want nobody to notice
-    if (text == NULL) {
-        // In this memory error case no message is logged
-        return;
+
+    if (text != NULL) {
+        errno = 0;
+        /* fat_fuse_log_create_string may had changed errno but we wan't to log
+           the message anyway */
+
+        fat_fuse_log_write(text);
+        free(text);
     }
-    fat_fuse_log_write(text);
-    free(text);
+
+    errno = starting_errno;
 }
 
 /* Get file attributes (file descriptor version) */
