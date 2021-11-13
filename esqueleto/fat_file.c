@@ -377,6 +377,7 @@ static void read_cluster_dir_entries(u8 *buffer, fat_dir_entry end_ptr,
         fat_dir_entry new_entry = init_direntry_from_buff(disk_dentry_ptr);
         fat_file child = init_file_from_dentry(new_entry, dir);
         (*elems) = g_list_append((*elems), child);
+        dir->dir.nentries++;
     }
     dir->dir.nentries = dir_entries_processed;
 }
@@ -401,7 +402,6 @@ GList *fat_file_read_children(fat_file dir) {
     while (!fat_table_is_EOC(dir->table, cur_cluster)) {
         fat_dir_entry end_ptr;
         end_ptr = (fat_dir_entry)(buf + bytes_per_cluster) - 1;
-        DEBUG("%s", (char *)end_ptr->base_name);
         if (full_pread(dir->table->fd, buf, bytes_per_cluster, cur_offset) !=
             bytes_per_cluster) {
             errno = EIO;
