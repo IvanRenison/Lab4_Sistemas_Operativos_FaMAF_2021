@@ -4,7 +4,6 @@
  * main() for a program to mount a FAT filesystem using FUSE
  */
 
-#include <alloca.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
