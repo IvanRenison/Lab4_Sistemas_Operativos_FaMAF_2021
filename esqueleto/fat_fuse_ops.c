@@ -196,14 +196,14 @@ static void fat_fuse_log_activity(const char *log_text, fat_file target_file,
                                   GSList *words) {
     int starting_errno = errno;
     char *text = fat_fuse_log_create_string(log_text, target_file, words);
+    errno = starting_errno;
+    // Log may have changed errno, but we don't want nobody to notice
     if (text == NULL) {
         // In this memory error case no message is logged
         return;
     }
     fat_fuse_log_write(text);
     free(text);
-    errno = starting_errno;
-    // Log may have changed errno, but we don't want nobody to notice
 }
 
 /* Get file attributes (file descriptor version) */
