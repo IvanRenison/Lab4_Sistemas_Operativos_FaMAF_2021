@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
         case 'r':
             mount_flags = FAT_MOUNT_FLAG_READONLY;
             break;
-        case 'l':
+        case 'l': // Don't hide log file
             log_hide = false;
             break;
         default:

@@ -75,9 +75,9 @@ static void fat_fuse_log_init(void) {
     errno = starting_errno;
 }
 
-/* Writes @text to the log file.
+/* Writes @text to the log file if it exists
  *
- * PRE: text != NULL && log file exists
+ * PRE: text != NULL
  */
 static void fat_fuse_log_write(const char *text) {
     assert(text != NULL);

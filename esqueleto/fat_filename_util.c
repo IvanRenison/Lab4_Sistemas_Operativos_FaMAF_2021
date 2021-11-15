@@ -83,7 +83,7 @@ void build_filename(const u8 *src_name_p, const u8 *src_extension_p,
     unsigned name_len;
     unsigned extension_len;
     int max_length = 8;
-    // Check if src_name_p is 0xe5 ++ s
+    // Check if src_name_p is 0xe5 ++ s an extension is log
     char log_name[] = LOG_FILE_BASENAME;
     log_name[0] = (char)FAT_FILENAME_DELETED_CHAR;
     char log_extension[] = LOG_FILE_EXTENSION;

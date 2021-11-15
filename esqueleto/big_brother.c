@@ -17,7 +17,7 @@ int is_log_filepath(char *filepath) {
     return strncmp(LOG_FILE, filepath, 8) == 0;
 }
 
-/* Checks if a needle is a  substring of the string haystack
+/* Checks if a needle is a substring of the string haystack
  * Ignores capitalization
  */
 static bool has_strcasestr(const char *haystack, const char *needle,
