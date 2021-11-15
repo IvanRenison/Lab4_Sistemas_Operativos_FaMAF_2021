@@ -11,7 +11,7 @@
 
 extern char *censored_words[];
 
-/* Returns a list with the censured words funded in @buf
+/* Returns a list with the censored words found in @buf
  * The returned list is owned by the caller but not the references.
  */
 GSList *censored_words_found(const char *buf, size_t size);

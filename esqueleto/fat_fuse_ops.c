@@ -37,11 +37,12 @@ static int fat_fuse_mknod(const char *path, mode_t mode, dev_t dev);
  */
 static void fat_fuse_log_init(void) {
     int starting_errno = errno;
-    errno = 0; // We wan't to creat fs.log, no matter of previos errors
+    errno = 0; // We want to create fs.log, without taking into account previous
+               // errors
     fat_volume vol = get_fat_volume();
     fat_tree_node log_node = fat_tree_node_search(vol->file_tree, LOG_FILEPATH);
     if (log_node != NULL) {
-        // log_file exist
+        // log_file exists
         DEBUG("log already exist");
         errno = starting_errno;
         return;
@@ -59,7 +60,7 @@ static void fat_fuse_log_init(void) {
     assert(log_node != NULL); // We just created it
 
     fat_file log_file = fat_tree_get_file(log_node);
-    // It sems like fat_tree_get_file ensures not NULL, but it's not clear
+    // It seems like fat_tree_get_file ensures not NULL, but it's not clear
     assert(log_file != NULL);
 
     fat_file log_parent = fat_tree_get_parent(log_node);
@@ -102,7 +103,7 @@ static bool is_fs_log(fat_file file) {
 }
 
 /* Creates a string with the current date and time.
- * The string is allocates, and must be freed by the caller.
+ * The string is allocated, and must be freed by the caller.
  * In case of memory allocation error NULL is returned
  */
 static char *now_to_str(void) {
@@ -208,12 +209,12 @@ static char *fat_fuse_log_create_string(const char *log_text,
 static void fat_fuse_log_activity(const char *log_text, fat_file target_file,
                                   GSList *words) {
     int starting_errno = errno;
-    errno = 0; // We wan't to log, no matter of previos errors
+    errno = 0; // We want to log, without taking into account previous errors
     char *text = fat_fuse_log_create_string(log_text, target_file, words);
 
     if (text != NULL) {
         errno = 0;
-        /* fat_fuse_log_create_string may had changed errno but we wan't to log
+        /* fat_fuse_log_create_string may have changed errno but we want to log
            the message anyway */
 
         fat_fuse_log_write(text);
@@ -324,6 +325,7 @@ static int fat_fuse_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     children = fat_tree_flatten_h_children(dir_node);
     child = children;
     while (*child != NULL) {
+        // Hide fs.log from ls
         if (!log_hide || !is_fs_log(*child)) {
             error = (*filler)(buf, (*child)->name, NULL, 0);
             if (error != 0) {

@@ -340,6 +340,7 @@ static bool is_end_of_directory(const fat_dir_entry disk_dentry) {
 /* Returns %true iff the filesystem driver should ignore the given directory
  * entry due to having invalid attributes or an invalid name. */
 static bool ignore_dentry(const fat_dir_entry disk_dentry) {
+    // check if disk_dentry is fs.log's dentry
     char log_name[] = LOG_FILE_BASENAME;
     log_name[0] = (char)FAT_FILENAME_DELETED_CHAR;
     bool is_log =
@@ -535,10 +536,12 @@ ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
         return 0;
     }
     if (fat_table_is_EOC(file->table, cluster)) {
+        // If all the clusters are full we search for the last cluster
         size_t bytes_per_cluster = fat_table_bytes_per_cluster(file->table);
         u32 last_cluster = fat_table_seek_cluster(
             file->table, file->start_cluster, offset - bytes_per_cluster);
         assert(!fat_table_is_EOC(file->table, last_cluster));
+        // After getting the last cluster we append a new free cluster to it
         cluster = fat_table_add_new_cluster_to_chain(file->table, last_cluster);
         DEBUG("Adding new cluster %u", cluster);
     }

@@ -197,7 +197,7 @@ void fat_file_unlink(fat_file file, fat_file parent);
 ssize_t fat_file_pwrite(fat_file file, const void *buf, size_t size,
                         off_t offset, fat_file parent);
 
-/* Hides a file marking it as pending to be removed and with atribute system
+/* Hides a file marking it as pending to be removed and with attribute system
  * in his dentry.
  * PRE: file != NULL && parent != NULL
  */
