@@ -22,6 +22,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+// (milagro) Al hacer los puntos estrella, la cantidad de codigo relacionado
+// a los logs quedo bastante grande y se podria mover a big_brother.c
+
+// (milagro) Para evitar usar variables globales, este flag podia incluirse
+// dentro del volumen
 bool log_hide = true;
 
 /* Retrieve the currently mounted FAT volume from the FUSE context. */
@@ -51,6 +56,7 @@ static void fat_fuse_log_init(void) {
 
     int mknod_exit = fat_fuse_mknod(LOG_FILEPATH, 0, 0); // 0, 0 are ignored
     if (mknod_exit != 0) {
+        // (milagro) "Unable"
         DEBUG("Aneble to creat " LOG_FILEPATH);
         errno = starting_errno;
         return;
@@ -119,6 +125,9 @@ static char *now_to_str(void) {
     strftime(text, DATE_MESSAGE_SIZE, "%d-%m-%Y %H:%M", timeinfo);
     return (text);
 }
+
+// (milagro) Esta funcion deberia estar en otro archivo. Ademas, podian usar
+// la que viene en string.h
 
 /* Concatenates 2 strings re-allocating the first one to add the necessary
  * space. s1 has to be a dinamic string (declared with malloc), but s2 can
